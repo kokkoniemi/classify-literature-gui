@@ -1,5 +1,9 @@
 # scholar-record-classifier
 
+## Screenshot
+
+![screenshot](./docs/screenshot.png)
+
 ## Project setup
 ```
 npm install
