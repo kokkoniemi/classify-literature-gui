@@ -13,12 +13,38 @@
     <p>
       <a :href="currentItem.url">{{currentItem.url}}</a>
     </p>
-    <p>{{ currentItem.description }}</p>
+    <p>
+      <small>
+        <b>Short description:</b>
+      </small>
+      <br />
+      "{{ currentItem.description }}"
+    </p>
+
+    <p v-if="currentItem.abstract">
+      <small>
+        <b>Abstract:</b>
+      </small>
+      <br />
+      <span class="abstract" v-html="nltobr(sanitizeAbstract(currentItem.abstract))"></span>
+    </p>
 
     <div class="actions">
-      <button @click="setExcluded" class="action action--exclude">Exclude</button>
-      <button @click="setUncertain" class="action action--uncertain">Uncertain</button>
-      <button @click="setIncluded" class="action action--include">Include</button>
+      <button
+        @click="setExcluded"
+        :class="[currentItem.status === 'excluded' && 'action--selected']"
+        class="action action--exclude"
+      >Exclude</button>
+      <button
+        @click="setUncertain"
+        :class="[currentItem.status === 'uncertain' && 'action--selected']"
+        class="action action--uncertain"
+      >Uncertain</button>
+      <button
+        @click="setIncluded"
+        :class="[currentItem.status === 'included' && 'action--selected']"
+        class="action action--include"
+      >Include</button>
     </div>
   </section>
 </template>
@@ -54,6 +80,12 @@ export default {
       } else {
         this.setCurrentItem(this.pageItems[index + 1]);
       }
+    },
+    nltobr(str) {
+      return str.replace(/(?:\r\n|\r|\n)/g, "<br>");
+    },
+    sanitizeAbstract(str) {
+      return str.replace("Abstract:\n", "").replace("Abstract\n", "");
     }
   }
 };
@@ -63,6 +95,12 @@ export default {
   margin-left: 20px;
   flex: 1;
   overflow: auto;
+}
+
+.abstract {
+  line-height: 36px;
+  font-family: Georgia;
+  font-size: 18px;
 }
 
 .actions {
@@ -87,6 +125,10 @@ export default {
 
     &--include {
       background: #c4ffb4;
+    }
+
+    &--selected {
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.4);
     }
   }
 }
