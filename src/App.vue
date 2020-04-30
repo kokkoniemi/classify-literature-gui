@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <h1>Scholar Record Classifier</h1>
+    <h1 class="app-name">Record Classifier</h1>
     <div class="main-container">
       <sidebar></sidebar>
       <classifier></classifier>
@@ -9,16 +9,16 @@
 </template>
 
 <script>
-import Sidebar from './components/Sidebar.vue';
-import Classifier from './components/Classifier.vue';
+import Sidebar from "./components/Sidebar.vue";
+import Classifier from "./components/Classifier.vue";
 
 export default {
-  name: 'App',
+  name: "App",
   components: {
     Sidebar,
     Classifier
   }
-}
+};
 </script>
 
 <style lang="scss">
@@ -35,5 +35,8 @@ export default {
 .main-container {
   display: flex;
   flex-direction: row;
+}
+.app-name {
+  border-bottom: 1px solid #eaeaea;
 }
 </style>

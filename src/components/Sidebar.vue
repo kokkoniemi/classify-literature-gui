@@ -1,6 +1,16 @@
 <template>
   <section id="sidebar">
-    <h3>Records of page #{{ page }}</h3>
+    <h4>Show by status:</h4>
+
+    <select v-model="statusFilter" class="filter-select">
+      <option value>All</option>
+      <option value="null">Unset</option>
+      <option value="uncertain">Uncertain</option>
+      <option value="excluded">Excluded</option>
+      <option value="included">Included</option>
+    </select>
+
+    <h4>Records of page #{{ page }}:</h4>
     <ul class="item-list">
       <li
         v-for="item in pageItems"
@@ -9,7 +19,7 @@
         class="item"
         :class="[
             item.status !== null && `item--${item.status}`,
-            item.id === currentItem.id && 'item--current'
+            !!currentItem && item.id === currentItem.id && 'item--current'
         ]"
       >
         <small>
@@ -38,11 +48,24 @@ export default {
     ...mapGetters(["currentItem"]),
     ...mapState(["page", "pageItems"])
   },
+  data: () => ({
+    statusFilter: ""
+  }),
   mounted() {
     this.fetchPageItems();
   },
+  watch: {
+    statusFilter: function(value) {
+      this.setStatusFilter(value);
+    }
+  },
   methods: {
-    ...mapActions(["fetchPageItems", "setPage", "setCurrentItem"]),
+    ...mapActions([
+      "fetchPageItems",
+      "setPage",
+      "setCurrentItem",
+      "setStatusFilter"
+    ]),
     truncate(str) {
       return str.length > 20 ? `${str.substring(0, 20)}...` : str;
     },
@@ -61,12 +84,32 @@ export default {
   padding: 5px;
   margin-right: 10px;
 }
+
+h4 {
+  margin: 0;
+  background: #f7f7f7;
+  padding: 3px 5px;
+  color: #5b5858;
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.filter-select {
+  height: 30px;
+  width: 100%;
+  margin: 10px 0 15px;
+  border: 1px solid #eaeaea;
+  border-radius: 0;
+  background: #fff;
+}
+
 .item-list {
   list-style: none;
   padding: 0;
 
   .item {
-    border-bottom: 1px solid #eaeaea;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
     padding: 5px;
     font-size: 12px;
     position: relative;
@@ -117,6 +160,7 @@ export default {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  margin-bottom: 0;
 
   .pagination-item {
     color: #3750dc;
