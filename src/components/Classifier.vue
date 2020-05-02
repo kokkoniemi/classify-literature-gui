@@ -209,7 +209,7 @@ export default {
         rgba(255, 180, 180, 1) 0%,
         rgb(182, 143, 143) 100%
       );
-      color: #441b1b;
+      color: #592f2f;
     }
 
     &--uncertain {
@@ -237,21 +237,21 @@ export default {
         rgb(143, 106, 106) 0%,
         rgb(211, 151, 151) 100%
       );
-      box-shadow: inset 0 0 1px #111111e9, inset 0px 2px 4px rgba(0, 0, 0, 0.3),
+      box-shadow: inset 0 0 1px #111111e9, inset 0px 2px 4px rgba(0, 0, 0, 0.4),
         inset 0 -2px 2px rgba(0, 0, 0, 0.2);
     }
 
     &--selected.action--include,
     &--include:active {
-      background: linear-gradient(180deg, #587c4e 0%, #aadc9d 100%);
-      box-shadow: inset 0 0 1px #111111e9, inset 0px 2px 4px rgba(0, 0, 0, 0.3),
+      background: linear-gradient(180deg, #719766 0%, #aadc9d 100%);
+      box-shadow: inset 0 0 1px #111111e9, inset 0px 2px 4px rgba(0, 0, 0, 0.4),
         inset 0 -2px 2px rgba(0, 0, 0, 0.2);
     }
 
     &--selected.action--uncertain,
     &--uncertain:active {
-      background: linear-gradient(180deg, #7b7b4f 0%, #d7d78e 100%);
-      box-shadow: inset 0 0 1px #111111e9, inset 0px 2px 4px rgba(0, 0, 0, 0.3),
+      background: linear-gradient(180deg, #a6a656 0%, #d7d78e 100%);
+      box-shadow: inset 0 0 1px #111111e9, inset 0px 2px 4px rgba(0, 0, 0, 0.4),
         inset 0 -2px 2px rgba(0, 0, 0, 0.2);
     }
   }
