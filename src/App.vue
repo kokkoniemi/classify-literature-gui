@@ -48,7 +48,11 @@ export default {
 }
 
 .vs__open-indicator {
-  scale: 0.6;
+  transform: scale(0.6);
+}
+
+.vs--single.vs--open .vs__selected {
+  position: relative;
 }
 
 #app {

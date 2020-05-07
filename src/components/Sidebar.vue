@@ -39,7 +39,7 @@
         @click="movePage(page - 1)"
         class="pagination-item"
         :class="[page <= 1 && 'pagination-item--disabled']"
-      >‹ Previous</li>
+      >‹ Prev</li>
       <li
         @click="movePage(page + 1)"
         class="pagination-item"
@@ -133,6 +133,7 @@ h4 {
 
 .v-select {
   margin: 10px 0;
+  font-size: 12px;
 }
 
 .item-list {
@@ -201,6 +202,7 @@ h4 {
     font-weight: 600;
     padding: 5px;
     cursor: pointer;
+    white-space: nowrap;
 
     &:hover {
       color: #233496;
