@@ -7,9 +7,10 @@
     </h4>
 
     <h1>{{ currentItem.title }}</h1>
-    <p>{{ currentItem.author }}</p>
+    <p><small>{{ currentItem.author }}</small></p>
     <p>
-      <a :href="currentItem.url">{{currentItem.url}}</a>
+      <a :href="currentItem.url">In publisher database</a> |&nbsp;
+      <span v-if="currentItem.Publication">{{ currentItem.Publication.name }}, jufo-level: {{ currentItem.Publication.jufoLevel }}</span>
     </p>
     <p v-if="!currentItem.abstract">
       <small>
@@ -161,7 +162,7 @@ export default {
   overflow: auto;
   display: flex;
   flex-direction: column;
-  max-height: 875px;
+  height: 875px;
 }
 
 .abstract {

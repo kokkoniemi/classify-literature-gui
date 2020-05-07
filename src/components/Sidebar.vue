@@ -2,15 +2,15 @@
   <section id="sidebar">
     <h4>Show by status:</h4>
 
-    <select v-model="statusFilter" class="filter-select">
-      <option value>All</option>
-      <option value="null">Unset</option>
-      <option value="uncertain">Uncertain</option>
-      <option value="excluded">Excluded</option>
-      <option value="included">Included</option>
-    </select>
+    <v-select
+      @input="(item) => setStatusFilter(item.value)"
+      :options="statusOptions"
+      :value="statusOptions.find(status => status.value === statusFilter).label"
+      :clearable="false"
+      :searchable="false"
+    ></v-select>
 
-    <h4>Records of page #{{ page }}:</h4>
+    <h4>Records {{ recordRange }} of {{ itemCount }}:</h4>
     <ul class="item-list">
       <li
         v-for="item in pageItems"
@@ -31,33 +31,69 @@
     </ul>
     <ul class="pagination">
       <li
+        @click="movePage(1)"
+        class="pagination-item"
+        :class="[page <= 1 && 'pagination-item--disabled']"
+      >‹‹ First</li>
+      <li
         @click="movePage(page - 1)"
         class="pagination-item"
         :class="[page <= 1 && 'pagination-item--disabled']"
-      >← Previous</li>
-      <li @click="movePage(page + 1)" class="pagination-item">Next →</li>
+      >‹ Previous</li>
+      <li
+        @click="movePage(page + 1)"
+        class="pagination-item"
+        :class="[page >= itemCount / pageLength && 'pagination-item--disabled']"
+      >Next ›</li>
+      <li
+        @click="movePage(Math.ceil(itemCount / pageLength))"
+        class="pagination-item"
+        :class="[page >= itemCount / pageLength && 'pagination-item--disabled']"
+      >Last ››</li>
     </ul>
   </section>
 </template>
 <script>
 import { mapActions, mapState, mapGetters } from "vuex";
+import vSelect from "vue-select";
 
 export default {
   name: "Sidebar",
+  components: {
+    vSelect
+  },
   computed: {
     ...mapGetters(["currentItem"]),
-    ...mapState(["page", "pageItems"])
+    ...mapState([
+      "page",
+      "pageLength",
+      "pageItems",
+      "itemCount",
+      "statusFilter"
+    ]),
+    recordRange() {
+      return `${
+        this.itemCount <= 0 ? 0 : (this.page - 1) * this.pageLength + 1
+      } – ${
+        this.itemCount < this.pageLength
+          ? this.itemCount
+          : this.page * this.pageLength
+      }`;
+    }
   },
-  data: () => ({
-    statusFilter: ""
-  }),
+  data() {
+    return {
+      statusOptions: [
+        { label: "All", value: "" },
+        { label: "Unset", value: "null" },
+        { label: "Uncertain", value: "uncertain" },
+        { label: "Excluded", value: "excluded" },
+        { label: "Included", value: "included" }
+      ]
+    };
+  },
   mounted() {
     this.fetchPageItems();
-  },
-  watch: {
-    statusFilter: function(value) {
-      this.setStatusFilter(value);
-    }
   },
   methods: {
     ...mapActions([
@@ -79,7 +115,7 @@ export default {
 </script>
 <style scoped lang="scss">
 #sidebar {
-  min-width: 200px;
+  width: 200px;
   border: 1px solid #eaeaea;
   padding: 5px;
   margin-right: 10px;
@@ -95,13 +131,8 @@ h4 {
   font-weight: 400;
 }
 
-.filter-select {
-  height: 30px;
-  width: 100%;
-  margin: 10px 0 15px;
-  border: 1px solid #eaeaea;
-  border-radius: 0;
-  background: #fff;
+.v-select {
+  margin: 10px 0;
 }
 
 .item-list {
@@ -115,6 +146,8 @@ h4 {
     position: relative;
     cursor: pointer;
     opacity: 0.8;
+    white-space: nowrap;
+    overflow: hidden;
 
     &:hover {
       opacity: 1;
@@ -161,6 +194,7 @@ h4 {
   flex-direction: row;
   justify-content: space-between;
   margin-bottom: 0;
+  font-size: 12px;
 
   .pagination-item {
     color: #3750dc;
