@@ -1,4 +1,4 @@
-# scholar-record-classifier
+# literature-inclusion-gui
 
 ## Screenshot
 
