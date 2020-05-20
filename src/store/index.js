@@ -89,6 +89,15 @@ export default new Vuex.Store({
         await commit('SET_PAGE_ITEMS', newItems);
       }
     },
+    async setItemComment({ commit, state, getters }, payload) {
+      const { nick, pageItems } = state;
+      const { currentItem } = getters;
+      const item = await records.update(currentItem.id, { comment: payload || null, editedBy: nick });
+      const index = pageItems.findIndex((item) => item.id === currentItem.id);
+      let newItems = [...pageItems];
+      newItems[index] = item.data;
+      await commit('SET_PAGE_ITEMS', newItems);
+    },
     updateNick({ commit }, payload) {
       commit('SET_NICK', payload);
     }

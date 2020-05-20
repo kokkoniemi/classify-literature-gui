@@ -149,6 +149,7 @@ h4 {
     opacity: 0.8;
     white-space: nowrap;
     overflow: hidden;
+    height: 18px;
 
     &:hover {
       opacity: 1;

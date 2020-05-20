@@ -7,10 +7,14 @@
     </h4>
 
     <h1>{{ currentItem.title }}</h1>
-    <p><small>{{ currentItem.author }}</small></p>
+    <p>
+      <small>{{ currentItem.author }}</small>
+    </p>
     <p>
       <a :href="currentItem.url">In publisher database</a> |&nbsp;
-      <span v-if="currentItem.Publication">{{ currentItem.Publication.name }}, jufo-level: {{ currentItem.Publication.jufoLevel }}</span>
+      <span
+        v-if="currentItem.Publication"
+      >{{ currentItem.Publication.name }}, jufo-level: {{ currentItem.Publication.jufoLevel }}</span>
     </p>
     <p v-if="!currentItem.abstract">
       <small>
@@ -29,6 +33,14 @@
         <span v-html="nltobr(sanitizeAbstract(currentItem.abstract))"></span>
       </p>
     </AbstractWrapper>
+
+    <input
+      :value="currentItem.comment"
+      @input="setComment"
+      class="comment"
+      type="text"
+      placeholder="Write your comments here..."
+    />
 
     <div class="actions">
       <button
@@ -53,6 +65,7 @@
 import { mapGetters, mapState, mapActions } from "vuex";
 import { format as formatDate } from "date-fns";
 import AbstractWrapper from "vue-perfect-scrollbar";
+import { debounce } from "lodash";
 import { keyCodes } from "../helpers/utils";
 
 export default {
@@ -88,7 +101,7 @@ export default {
         (status === null && this.statusFilter === "null") ||
         status === this.statusFilter
       );
-    }
+    },
   },
   created() {
     window.addEventListener("keydown", this.moveTo);
@@ -97,7 +110,12 @@ export default {
     window.removeEventListener("keydown", this.moveTo);
   },
   methods: {
-    ...mapActions(["setItemStatus", "setCurrentItem", "setPage"]),
+    ...mapActions([
+      "setItemStatus",
+      "setItemComment",
+      "setCurrentItem",
+      "setPage"
+    ]),
     async setExcluded() {
       await this.setItemStatus("excluded");
       this.setNextItem(this.nextFlag);
@@ -110,6 +128,9 @@ export default {
       await this.setItemStatus("included");
       this.setNextItem(this.nextFlag);
     },
+    setComment: debounce(async function (e) {
+      await this.setItemComment(e.target.value);
+    }, 300),
     setNextItem(skip) {
       if (skip) {
         return;
@@ -176,12 +197,12 @@ export default {
   flex: 1;
   overflow: hidden;
   position: relative;
-  padding: 10px 15px;
-  box-shadow: inset 0 0 10px rgba(0,0,0,0.15);
+  padding: 10px 20px;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.15);
 }
 
 .actions {
-  margin-top: 30px;
+  margin-top: 5px;
   display: flex;
   padding: 5px;
 
@@ -226,9 +247,11 @@ export default {
     }
 
     &--selected,
-    &:active {
+    &:active,
+    &:focus {
       text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.6);
       color: #fff;
+      outline: none;
     }
 
     &--selected.action--exclude,
@@ -255,6 +278,25 @@ export default {
       box-shadow: inset 0 0 1px #111111e9, inset 0px 2px 4px rgba(0, 0, 0, 0.4),
         inset 0 -2px 2px rgba(0, 0, 0, 0.2);
     }
+  }
+}
+
+.comment {
+  height: 25px;
+  padding: 5px;
+  border: none;
+  border-bottom: 1px solid #eaeaea;
+  // box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
+  margin: 5px 0;
+  transition: background-color 0.2s ease-in, box-shadow 0.2s ease-in;
+  font-size: 14px;
+  font-family: Georgia, "Times New Roman", Times, serif;
+
+  &:focus,
+  &:hover {
+    outline: none;
+    box-shadow: none;
+    background-color: #eaeaea;
   }
 }
 
