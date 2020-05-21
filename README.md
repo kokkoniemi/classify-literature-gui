@@ -1,4 +1,4 @@
-# literature-inclusion-gui
+# classify-literature-gui
 
 ## Screenshot
 
