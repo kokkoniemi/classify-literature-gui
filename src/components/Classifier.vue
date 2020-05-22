@@ -37,6 +37,8 @@
     <input
       :value="currentItem.comment"
       @input="setComment"
+      @focus="commentFocus = true"
+      @blur="commentFocus = false"
       class="comment"
       type="text"
       placeholder="Write your comments here..."
@@ -71,6 +73,9 @@ import { keyCodes } from "../helpers/utils";
 export default {
   name: "Classifier",
   components: { AbstractWrapper },
+  data() {
+    return { commentFocus: false };
+  },
   computed: {
     ...mapGetters(["currentItem"]),
     ...mapState(["pageItems", "pageLength", "page", "statusFilter"]),
@@ -101,7 +106,7 @@ export default {
         (status === null && this.statusFilter === "null") ||
         status === this.statusFilter
       );
-    },
+    }
   },
   created() {
     window.addEventListener("keydown", this.moveTo);
@@ -128,9 +133,9 @@ export default {
       await this.setItemStatus("included");
       this.setNextItem(this.nextFlag);
     },
-    setComment: debounce(async function (e) {
+    setComment: debounce(async function(e) {
       await this.setItemComment(e.target.value);
-    }, 300),
+    }, 1000),
     setNextItem(skip) {
       if (skip) {
         return;
@@ -163,14 +168,16 @@ export default {
       return res.split("\n•\n").join("");
     },
     moveTo(e) {
-      switch (e.keyCode) {
-        case keyCodes.ARROW_LEFT:
-          this.setPrevItem();
-          break;
-        case keyCodes.ARROW_RIGHT:
-          this.setNextItem();
-          break;
-        default:
+      if (!this.commentFocus) {
+        switch (e.keyCode) {
+          case keyCodes.ARROW_LEFT:
+            this.setPrevItem();
+            break;
+          case keyCodes.ARROW_RIGHT:
+            this.setNextItem();
+            break;
+          default:
+        }
       }
     }
   }
