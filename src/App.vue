@@ -20,7 +20,7 @@ export default {
   name: "App",
   components: {
     Sidebar,
-    Classifier
+    Classifier,
   },
   computed: {
     ...mapState(['nick']),
@@ -41,6 +41,7 @@ export default {
 
 <style lang="scss">
 @import "vue-select/src/scss/vue-select.scss";
+@import "./scss/nprogress.scss";
 
 .vs__dropdown-toggle {
   border-radius: 0 !important;

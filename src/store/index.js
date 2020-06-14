@@ -14,6 +14,7 @@ export default new Vuex.Store({
     currentItemId: null,
     statusFilter: "",
     nick: null,
+    loading: false,
   },
   mutations: {
     SET_PAGE(state, payload) {

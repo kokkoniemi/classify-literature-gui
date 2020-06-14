@@ -85,7 +85,7 @@ export default {
       }
       return formatDate(
         new Date(this.currentItem.createdAt),
-        "dd.MM.yyyy HH:ii:ss "
+        "dd.MM.yyyy HH:mm:ss "
       );
     },
     modifiedFormatted() {
@@ -94,7 +94,7 @@ export default {
       }
       return formatDate(
         new Date(this.currentItem.updatedAt),
-        "dd.MM.yyyy HH:ii:ss "
+        "dd.MM.yyyy HH:mm:ss "
       );
     },
     nextFlag() {
