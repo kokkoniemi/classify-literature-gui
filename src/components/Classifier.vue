@@ -7,10 +7,10 @@
     </h4>
 
     <h1>{{ currentItem.title }}</h1>
-    <p>
+    <p class="author">
       <small>{{ currentItem.author }}</small>
     </p>
-    <p>
+    <p class="publication">
       <a :href="currentItem.url">In publisher database</a> |&nbsp;
       <span
         v-if="currentItem.Publication"
@@ -24,7 +24,7 @@
       {{ currentItem.description }}
     </p>
 
-    <AbstractWrapper class="abstract-wrapper" :settings="{}">
+    <div class="abstract-wrapper" :settings="{}">
       <p v-if="currentItem.abstract" class="abstract">
         <small>
           <b>Abstract:</b>
@@ -32,47 +32,51 @@
         <br />
         <span v-html="nltobr(sanitizeAbstract(currentItem.abstract))"></span>
       </p>
-    </AbstractWrapper>
-
-    <input
-      :value="currentItem.comment"
-      @input="setComment"
-      @focus="commentFocus = true"
-      @blur="commentFocus = false"
-      class="comment"
-      type="text"
-      placeholder="Write your comments here..."
-    />
-
-    <div class="actions">
-      <button
-        @click="setExcluded"
-        :class="[currentItem.status === 'excluded' && 'action--selected']"
-        class="action action--exclude"
-      >Exclude</button>
-      <button
-        @click="setUncertain"
-        :class="[currentItem.status === 'uncertain' && 'action--selected']"
-        class="action action--uncertain"
-      >Uncertain</button>
-      <button
-        @click="setIncluded"
-        :class="[currentItem.status === 'included' && 'action--selected']"
-        class="action action--include"
-      >Include</button>
     </div>
+
+    <section class="bottom-bar">
+      <div class="bottom-bar__center">
+        <div class="bottom-bar__actions">
+          <input
+            :value="currentItem.comment"
+            @input="setComment"
+            @focus="commentFocus = true"
+            @blur="commentFocus = false"
+            class="comment"
+            type="text"
+            placeholder="Write your comments here..."
+          />
+
+          <div class="actions">
+            <button
+              @click="setExcluded"
+              :class="[currentItem.status === 'excluded' && 'action--selected']"
+              class="action action--exclude"
+            >Exclude</button>
+            <button
+              @click="setUncertain"
+              :class="[currentItem.status === 'uncertain' && 'action--selected']"
+              class="action action--uncertain"
+            >Uncertain</button>
+            <button
+              @click="setIncluded"
+              :class="[currentItem.status === 'included' && 'action--selected']"
+              class="action action--include"
+            >Include</button>
+          </div>
+        </div>
+      </div>
+    </section>
   </section>
 </template>
 <script>
 import { mapGetters, mapState, mapActions } from "vuex";
 import { format as formatDate } from "date-fns";
-import AbstractWrapper from "vue-perfect-scrollbar";
 import { debounce } from "lodash";
 import { keyCodes } from "../helpers/utils";
 
 export default {
   name: "Classifier",
-  components: { AbstractWrapper },
   data() {
     return { commentFocus: false };
   },
@@ -190,11 +194,14 @@ export default {
   overflow: auto;
   display: flex;
   flex-direction: column;
-  height: 875px;
+}
+
+h1 {
+  margin: 20px 0 10px;
 }
 
 .abstract {
-  line-height: 36px;
+  line-height: 32px;
   font-family: Georgia;
   font-size: 18px;
   margin: 0;
@@ -202,10 +209,7 @@ export default {
 
 .abstract-wrapper {
   flex: 1;
-  overflow: hidden;
   position: relative;
-  padding: 10px 20px;
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.15);
 }
 
 .actions {
@@ -304,6 +308,48 @@ export default {
     outline: none;
     box-shadow: none;
     background-color: #eaeaea;
+  }
+}
+
+.publication {
+  margin-top: 0;
+  padding-bottom: 10px;
+  border-bottom: 3px solid #eaeaea;
+}
+
+.author {
+  margin-top: 0;
+}
+
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  &__center {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  &__actions {
+    display: flex;
+    flex-direction: column;
+    margin-left: 230px;
+    background: #fff;
+    padding-bottom: 5px;
+    // box-shadow: 0 -20px 20px rgb(255, 255, 255);
+    position: relative;
+    border-top: 3px solid #eaeaea;
+
+    &:after {
+      content: "";
+      width: 100%;
+      height: 1px;
+      background: #fff;
+      position: absolute;
+      top: -4px;
+    }
   }
 }
 

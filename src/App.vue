@@ -66,13 +66,19 @@ export default {
 }
 .main-container {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
+  position: relative;
+  padding-left: 220px;
+  padding-bottom: 100px;
+  min-height: 700px;
 }
 .app-name {
   border-bottom: 1px solid #eaeaea;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
+  margin: 0 0 10px;
+  font-size: 22px;
 
   input {
     margin-bottom: 5px;
@@ -106,5 +112,9 @@ export default {
   0% { background: transparent; }
   50% { background: #eaeaea; }
   100% { background: auto; }
+}
+
+body {
+  overflow-y: scroll;
 }
 </style>
