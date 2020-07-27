@@ -1,12 +1,13 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import createPersistedState from "vuex-persistedstate";
-import { records } from '../helpers/api';
+import { records, mappingQuestions } from '../helpers/api';
 
 Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
+    tab: 'inc-exc',
     page: 1,
     pageLength: 25,
     pageItems: [],
@@ -15,6 +16,8 @@ export default new Vuex.Store({
     statusFilter: "",
     nick: null,
     loading: false,
+    mappingQuestions: [],
+    moveLock: false,
   },
   mutations: {
     SET_PAGE(state, payload) {
@@ -35,6 +38,15 @@ export default new Vuex.Store({
     SET_ITEM_COUNT(state, payload) {
       state.itemCount = payload;
     },
+    SET_TAB(state, payload) {
+      state.tab = payload;
+    },
+    SET_MAPPING_QUESTIONS(state, payload) {
+      state.mappingQuestions = payload;
+    },
+    SET_MOVE_LOCK(state, payload) {
+      state.moveLock = payload;
+    }
   },
   getters: {
     currentItem: ({ currentItemId, pageItems }) => !currentItemId ? null : pageItems.find(item => item.id == currentItemId),
@@ -102,6 +114,40 @@ export default new Vuex.Store({
     },
     updateNick({ commit }, payload) {
       commit('SET_NICK', payload);
+    },
+    updateTab({ commit }, payload) {
+      commit('SET_TAB', payload);
+    },
+    async fetchMappingQuestions({ commit }) {
+      const items = await mappingQuestions.index();
+      commit('SET_MAPPING_QUESTIONS', items.data.questions);
+    },
+    async createMappingQuestion({ state, commit }) {
+      const question = await mappingQuestions.save({ title: '', type: 'multiSelect', position: state.mappingQuestions.length });
+      commit('SET_MAPPING_QUESTIONS', [...state.mappingQuestions, question.data ]);
+    },
+    async deleteMappingQuestion({ state, commit }, id) {
+      await mappingQuestions.delete(id);
+      commit('SET_MAPPING_QUESTIONS', [...state.mappingQuestions.filter(q => q.id != id)]);
+    },
+    async updateMappingQuestion({ state, commit }, data) {
+      const { id, ...rest } = data;
+      const question = await mappingQuestions.update(id, rest);
+      let newQuestions = [...state.mappingQuestions];
+      const index = await newQuestions.findIndex((item) => item.id === id);
+      newQuestions[index] = await question.data;
+      commit('SET_MAPPING_QUESTIONS', [...newQuestions]);
+    },
+    async createMappingOption({ dispatch }, data) {
+      const { id, ...rest } = data;
+      await mappingQuestions.mappingOptions.save(id, rest);
+      await dispatch('fetchMappingQuestions');
+    },
+    setMoveLock({ commit }) {
+      commit('SET_MOVE_LOCK', true);
+    },
+    unsetMoveLock({ commit}) {
+      commit('SET_MOVE_LOCK', false);
     }
   },
   modules: {

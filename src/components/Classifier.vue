@@ -40,14 +40,14 @@
           <input
             :value="currentItem.comment"
             @input="setComment"
-            @focus="commentFocus = true"
-            @blur="commentFocus = false"
+            @focus="setMoveLock"
+            @blur="unsetMoveLock"
             class="comment"
             type="text"
             placeholder="Write your comments here..."
           />
 
-          <div class="actions">
+          <div class="inclusion-actions" v-if="tab === 'inc-exc'">
             <button
               @click="setExcluded"
               :class="[currentItem.status === 'excluded' && 'action--selected']"
@@ -64,6 +64,8 @@
               class="action action--include"
             >Include</button>
           </div>
+
+          <mapping-actions v-if="tab === 'map'"></mapping-actions>
         </div>
       </div>
     </section>
@@ -71,18 +73,24 @@
 </template>
 <script>
 import { mapGetters, mapState, mapActions } from "vuex";
+import MappingActions from "./MappingActions.vue";
 import { format as formatDate } from "date-fns";
 import { debounce } from "lodash";
 import { keyCodes } from "../helpers/utils";
 
 export default {
   name: "Classifier",
+  components: {
+    MappingActions
+  },
   data() {
-    return { commentFocus: false };
+    return {
+      commentFocus: false,
+    };
   },
   computed: {
     ...mapGetters(["currentItem"]),
-    ...mapState(["pageItems", "pageLength", "page", "statusFilter"]),
+    ...mapState(["pageItems", "pageLength", "page", "statusFilter", "tab", "moveLock"]),
     createdFormatted() {
       if (!this.currentItem) {
         return null;
@@ -110,7 +118,7 @@ export default {
         (status === null && this.statusFilter === "null") ||
         status === this.statusFilter
       );
-    }
+    },
   },
   created() {
     window.addEventListener("keydown", this.moveTo);
@@ -123,7 +131,9 @@ export default {
       "setItemStatus",
       "setItemComment",
       "setCurrentItem",
-      "setPage"
+      "setPage",
+      "setMoveLock",
+      "unsetMoveLock"
     ]),
     async setExcluded() {
       await this.setItemStatus("excluded");
@@ -137,7 +147,7 @@ export default {
       await this.setItemStatus("included");
       this.setNextItem(this.nextFlag);
     },
-    setComment: debounce(async function(e) {
+    setComment: debounce(async function (e) {
       await this.setItemComment(e.target.value);
     }, 1000),
     setNextItem(skip) {
@@ -145,7 +155,7 @@ export default {
         return;
       }
       const index = this.pageItems.findIndex(
-        item => item.id === this.currentItem.id
+        (item) => item.id === this.currentItem.id
       );
       if (index >= this.pageLength - 1) {
         this.setPage(this.page + 1);
@@ -155,7 +165,7 @@ export default {
     },
     async setPrevItem() {
       const index = this.pageItems.findIndex(
-        item => item.id === this.currentItem.id
+        (item) => item.id === this.currentItem.id
       );
       if (index <= 0 && this.page > 1) {
         await this.setPage(this.page - 1);
@@ -172,7 +182,7 @@ export default {
       return res.split("\n•\n").join("");
     },
     moveTo(e) {
-      if (!this.commentFocus) {
+      if (!this.moveLock) {
         switch (e.keyCode) {
           case keyCodes.ARROW_LEFT:
             this.setPrevItem();
@@ -183,8 +193,8 @@ export default {
           default:
         }
       }
-    }
-  }
+    },
+  },
 };
 </script>
 <style scoped lang="scss">
@@ -212,7 +222,7 @@ h1 {
   position: relative;
 }
 
-.actions {
+.inclusion-actions {
   margin-top: 5px;
   display: flex;
   padding: 5px;
@@ -326,10 +336,12 @@ h1 {
   bottom: 0;
   left: 0;
   right: 0;
+  pointer-events: none;
 
   &__center {
     max-width: 1200px;
     margin: 0 auto;
+    pointer-events: none;
   }
 
   &__actions {
@@ -338,9 +350,9 @@ h1 {
     margin-left: 230px;
     background: #fff;
     padding-bottom: 5px;
-    // box-shadow: 0 -20px 20px rgb(255, 255, 255);
     position: relative;
     border-top: 3px solid #eaeaea;
+    pointer-events: auto;
 
     &:after {
       content: "";
