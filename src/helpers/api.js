@@ -27,7 +27,11 @@ http.interceptors.response.use(response => {
 export const records = {
     index: (params) => http.get("records", { params }),
     get: (id, params) => http.get(`records/${id}`, { params }),
-    update: (id, data, params) => http.put(`records/${id}`, data, { params })
+    update: (id, data, params) => http.put(`records/${id}`, data, { params }),
+    mappingOptions: {
+        save: (id, data, params) => http.post(`records/${id}/mapping-options`, data, { params }),
+        delete: (id, optionId, params) => http.delete(`records/${id}/mapping-options/${optionId}`, { params })
+    },
 };
 
 export const mappingQuestions = {

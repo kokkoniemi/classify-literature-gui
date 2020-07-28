@@ -70,9 +70,10 @@
                 >{{ optionInput }}</span>
               </li>
               <li
-                v-for="option in question.MappingOptions.filter(opt => opt.title.toLowerCase().includes(optionInput.toLowerCase()))"
+                v-for="option in question.MappingOptions.filter(filterOptionList)"
                 :key="option.id"
                 class="mapping-question__tags--list-item"
+                @click="() => addRecordMappingOption({mappingQuestionId: question.id, mappingOptionId: option.id})"
               >
                 <span
                   class="mapping-question__tags--tag"
@@ -84,6 +85,21 @@
           </div>
         </div>
         <!-- per record options -->
+        <div class="mapping-question__tags">
+          <span
+            v-for="option in currentItem.MappingOptions.filter(o => o.mappingQuestionId === question.id)"
+            :key="option.id"
+            class="mapping-question__tags--tag"
+            :style="{ backgroundColor: option.color }"
+            @click="() => removeRecordMappingOption(option.id)"
+          >
+            {{ option.title }}
+            <span
+              class="material-icons"
+              v-if="activeOptionPopup === question.id"
+            >clear</span>
+          </span>
+        </div>
         <input
           v-if="activeOptionPopup === question.id"
           type="text"
@@ -102,7 +118,7 @@
 <script>
 import vSelect from "vue-select";
 import { debounce } from "lodash";
-import { mapActions, mapState } from "vuex";
+import { mapActions, mapState, mapGetters } from "vuex";
 export default {
   name: "MappingActions",
   components: {
@@ -120,6 +136,7 @@ export default {
   },
   computed: {
     ...mapState(["mappingQuestions"]),
+    ...mapGetters(["currentItem"]),
   },
   mounted() {
     this.fetchMappingQuestions();
@@ -132,6 +149,8 @@ export default {
       "deleteMappingQuestion",
       "updateMappingQuestion",
       "createMappingOption",
+      "addRecordMappingOption",
+      "removeRecordMappingOption",
       "setMoveLock",
       "unsetMoveLock",
     ]),
@@ -251,6 +270,12 @@ export default {
       ];
       return colors[Math.floor(Math.random() * colors.length)];
     },
+    filterOptionList(opt) {
+      return (
+        this.currentItem.MappingOptions.findIndex((o) => o.id === opt.id) ===
+          -1 && opt.title.toLowerCase().includes(this.optionInput.toLowerCase())
+      );
+    },
   },
 };
 </script>
@@ -263,6 +288,7 @@ export default {
   .mapping-question {
     display: flex;
     flex-direction: row;
+    min-height: 33px;
 
     &:last-of-type {
       .mapping-question__title {
@@ -311,6 +337,24 @@ export default {
         padding: 5px;
         border-radius: 3px;
         background-color: rgb(235, 213, 213);
+        margin-right: 5px;
+        position: relative;
+        z-index: 2;
+
+        .material-icons {
+          font-size: 14px;
+          position: absolute;
+          right: -4px;
+          top: -5px;
+          color: rgb(235, 213, 213);
+          background: #820b0b;
+          border-radius: 50%;
+          display: none;
+        }
+
+        &:hover .material-icons {
+          display: inline;
+        }
       }
 
       &--create {
@@ -327,8 +371,8 @@ export default {
 
         input {
           border: 0;
-          margin-left: 10px;
           flex: 1;
+          background: transparent;
 
           &:focus {
             border: 0;
@@ -343,7 +387,7 @@ export default {
         top: 0;
         left: 0;
         right: 0;
-        transform: translateY(calc(-100% + 29px));
+        transform: translateY(calc(-100% + 35px));
         background-color: #fff;
         border: 1px solid #aeaeae;
         padding: 10px 5px 35px;
@@ -362,6 +406,9 @@ export default {
         list-style: none;
         margin: 0;
         padding: 0;
+        max-height: 300px;
+        overflow-y: scroll;
+        overflow-x: hidden;
       }
 
       &--list-item {
@@ -370,6 +417,7 @@ export default {
         display: flex;
         align-items: center;
         padding: 0 5px;
+        margin: 0 -5px;
         transition: background-color 0.2s ease-in;
 
         &:hover {

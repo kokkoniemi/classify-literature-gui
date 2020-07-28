@@ -53,7 +53,7 @@ export default new Vuex.Store({
   },
   actions: {
     async setPage({ commit, dispatch, state }, payload) {
-      await commit('SET_PAGE', payload);
+      commit('SET_PAGE', payload);
       await dispatch('fetchPageItems');
       await dispatch('setCurrentItem', state.pageItems[0]);
     },
@@ -61,9 +61,9 @@ export default new Vuex.Store({
       commit('SET_CURRENT_ITEM', payload);
     },
     async setStatusFilter({ commit, dispatch }, payload) {
-      await commit('SET_STATUS_FILTER', payload);
+      commit('SET_STATUS_FILTER', payload);
       commit('SET_PAGE', 1);
-      dispatch("fetchPageItems");
+      await dispatch("fetchPageItems");
     },
     async fetchPageItems({ commit, state, getters, dispatch }, where) {
       const { page, pageLength, statusFilter } = state;
@@ -98,8 +98,8 @@ export default new Vuex.Store({
           nextItem = item.data;
           newItems[index] = item.data;
         }
-        await commit('SET_CURRENT_ITEM', nextItem);
-        await commit('SET_PAGE_ITEMS', newItems);
+        commit('SET_CURRENT_ITEM', nextItem);
+        commit('SET_PAGE_ITEMS', newItems);
       }
     },
     async setItemComment({ commit, state, getters }, payload) {
@@ -109,7 +109,7 @@ export default new Vuex.Store({
       let newItems = [...pageItems];
       currentItem.comment = payload;
       newItems[index] = currentItem;
-      await commit('SET_PAGE_ITEMS', newItems);
+      commit('SET_PAGE_ITEMS', newItems);
       await records.update(currentItem.id, { comment: payload || null, editedBy: nick });
     },
     updateNick({ commit }, payload) {
@@ -124,7 +124,7 @@ export default new Vuex.Store({
     },
     async createMappingQuestion({ state, commit }) {
       const question = await mappingQuestions.save({ title: '', type: 'multiSelect', position: state.mappingQuestions.length });
-      commit('SET_MAPPING_QUESTIONS', [...state.mappingQuestions, question.data ]);
+      commit('SET_MAPPING_QUESTIONS', [...state.mappingQuestions, question.data]);
     },
     async deleteMappingQuestion({ state, commit }, id) {
       await mappingQuestions.delete(id);
@@ -138,15 +138,45 @@ export default new Vuex.Store({
       newQuestions[index] = await question.data;
       commit('SET_MAPPING_QUESTIONS', [...newQuestions]);
     },
-    async createMappingOption({ dispatch }, data) {
+    async createMappingOption({ state, getters, commit, dispatch }, data) {
+      const { pageItems, currentItemId } = state;
+      const { currentItem } = getters
       const { id, ...rest } = data;
-      await mappingQuestions.mappingOptions.save(id, rest);
+      const option = await mappingQuestions.mappingOptions.save(id, rest);
+      const recordOption = await records.mappingOptions.save(currentItemId, { mappingQuestionId: id, mappingOptionId: option.data.id });
       await dispatch('fetchMappingQuestions');
+      const index = pageItems.findIndex((item) => item.id === currentItem.id);
+      let newItems = [...pageItems];
+      currentItem.MappingOptions = [...currentItem.MappingOptions, recordOption.data];
+      newItems[index] = currentItem;
+      commit('SET_PAGE_ITEMS', newItems); 
+    },
+    async addRecordMappingOption({ state, commit, getters }, data) {
+      const { pageItems, currentItemId } = state;
+      const { currentItem } = getters;
+      const { mappingQuestionId, mappingOptionId } = data;
+      const option = await records.mappingOptions.save(currentItemId, { mappingQuestionId, mappingOptionId });
+
+      const index = pageItems.findIndex((item) => item.id === currentItem.id);
+      let newItems = [...pageItems];
+      currentItem.MappingOptions = [...currentItem.MappingOptions, option.data];
+      newItems[index] = currentItem;
+      commit('SET_PAGE_ITEMS', newItems);
+    },
+    async removeRecordMappingOption({ state, commit, getters }, optionId) {
+      const { pageItems, currentItemId } = state;
+      const { currentItem } = getters;
+      await records.mappingOptions.delete(currentItemId, optionId);
+      const index = pageItems.findIndex((item) => item.id === currentItem.id);
+      let newItems = [...pageItems];
+      currentItem.MappingOptions = currentItem.MappingOptions.filter(o => o.id !== optionId);
+      newItems[index] = currentItem;
+      await commit('SET_PAGE_ITEMS', newItems);
     },
     setMoveLock({ commit }) {
       commit('SET_MOVE_LOCK', true);
     },
-    unsetMoveLock({ commit}) {
+    unsetMoveLock({ commit }) {
       commit('SET_MOVE_LOCK', false);
     }
   },
