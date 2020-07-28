@@ -340,6 +340,8 @@ export default {
         margin-right: 5px;
         position: relative;
         z-index: 2;
+        font-weight: 600;
+        color: rgba(0, 0, 0, 0.65);
 
         .material-icons {
           font-size: 14px;
