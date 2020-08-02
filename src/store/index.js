@@ -1,12 +1,13 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import createPersistedState from "vuex-persistedstate";
-import { records } from '../helpers/api';
+import { records, mappingQuestions } from '../helpers/api';
 
 Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
+    tab: 'inc-exc',
     page: 1,
     pageLength: 25,
     pageItems: [],
@@ -15,6 +16,8 @@ export default new Vuex.Store({
     statusFilter: "",
     nick: null,
     loading: false,
+    mappingQuestions: [],
+    moveLock: false,
   },
   mutations: {
     SET_PAGE(state, payload) {
@@ -35,13 +38,22 @@ export default new Vuex.Store({
     SET_ITEM_COUNT(state, payload) {
       state.itemCount = payload;
     },
+    SET_TAB(state, payload) {
+      state.tab = payload;
+    },
+    SET_MAPPING_QUESTIONS(state, payload) {
+      state.mappingQuestions = payload;
+    },
+    SET_MOVE_LOCK(state, payload) {
+      state.moveLock = payload;
+    }
   },
   getters: {
     currentItem: ({ currentItemId, pageItems }) => !currentItemId ? null : pageItems.find(item => item.id == currentItemId),
   },
   actions: {
     async setPage({ commit, dispatch, state }, payload) {
-      await commit('SET_PAGE', payload);
+      commit('SET_PAGE', payload);
       await dispatch('fetchPageItems');
       await dispatch('setCurrentItem', state.pageItems[0]);
     },
@@ -49,9 +61,9 @@ export default new Vuex.Store({
       commit('SET_CURRENT_ITEM', payload);
     },
     async setStatusFilter({ commit, dispatch }, payload) {
-      await commit('SET_STATUS_FILTER', payload);
+      commit('SET_STATUS_FILTER', payload);
       commit('SET_PAGE', 1);
-      dispatch("fetchPageItems");
+      await dispatch("fetchPageItems");
     },
     async fetchPageItems({ commit, state, getters, dispatch }, where) {
       const { page, pageLength, statusFilter } = state;
@@ -71,7 +83,7 @@ export default new Vuex.Store({
         await dispatch('setCurrentItem', items.data.records[0]);
       }
     },
-    async setItemStatus({ commit, state, getters }, payload) {
+    async setItemStatus({ commit, state, dispatch, getters }, payload) {
       const { pageItems, statusFilter, nick } = state;
       const { currentItem } = getters;
       if (currentItem) {
@@ -80,14 +92,14 @@ export default new Vuex.Store({
         let newItems = [...pageItems];
         let nextItem = null;
         if (statusFilter !== "" && statusFilter !== item.data.status) {
-          newItems = newItems.filter(oldItem => oldItem.id !== item.data.id);
-          nextItem = pageItems.length > index + 1 ? pageItems[index + 1] : pageItems[pageItems.length - 1];
+          await dispatch('fetchPageItems', { status: statusFilter });
+          nextItem = pageItems.length <= index + 1 ? state.pageItems[pageItems.length - 1] : pageItems[index + 1];
         } else {
           nextItem = item.data;
           newItems[index] = item.data;
+          commit('SET_PAGE_ITEMS', newItems);
         }
-        await commit('SET_CURRENT_ITEM', nextItem);
-        await commit('SET_PAGE_ITEMS', newItems);
+        commit('SET_CURRENT_ITEM', nextItem);
       }
     },
     async setItemComment({ commit, state, getters }, payload) {
@@ -97,11 +109,75 @@ export default new Vuex.Store({
       let newItems = [...pageItems];
       currentItem.comment = payload;
       newItems[index] = currentItem;
-      await commit('SET_PAGE_ITEMS', newItems);
+      commit('SET_PAGE_ITEMS', newItems);
       await records.update(currentItem.id, { comment: payload || null, editedBy: nick });
     },
     updateNick({ commit }, payload) {
       commit('SET_NICK', payload);
+    },
+    updateTab({ commit }, payload) {
+      commit('SET_TAB', payload);
+    },
+    async fetchMappingQuestions({ commit }) {
+      const items = await mappingQuestions.index();
+      commit('SET_MAPPING_QUESTIONS', items.data.questions);
+    },
+    async createMappingQuestion({ state, commit }) {
+      const question = await mappingQuestions.save({ title: '', type: 'multiSelect', position: state.mappingQuestions.length });
+      commit('SET_MAPPING_QUESTIONS', [...state.mappingQuestions, question.data]);
+    },
+    async deleteMappingQuestion({ state, commit }, id) {
+      await mappingQuestions.delete(id);
+      commit('SET_MAPPING_QUESTIONS', [...state.mappingQuestions.filter(q => q.id != id)]);
+    },
+    async updateMappingQuestion({ state, commit }, data) {
+      const { id, ...rest } = data;
+      const question = await mappingQuestions.update(id, rest);
+      let newQuestions = [...state.mappingQuestions];
+      const index = await newQuestions.findIndex((item) => item.id === id);
+      newQuestions[index] = await question.data;
+      commit('SET_MAPPING_QUESTIONS', [...newQuestions]);
+    },
+    async createMappingOption({ state, getters, commit, dispatch }, data) {
+      const { pageItems, currentItemId } = state;
+      const { currentItem } = getters
+      const { id, ...rest } = data;
+      const option = await mappingQuestions.mappingOptions.save(id, rest);
+      const recordOption = await records.mappingOptions.save(currentItemId, { mappingQuestionId: id, mappingOptionId: option.data.id });
+      await dispatch('fetchMappingQuestions');
+      const index = pageItems.findIndex((item) => item.id === currentItem.id);
+      let newItems = [...pageItems];
+      currentItem.MappingOptions = [...currentItem.MappingOptions, recordOption.data];
+      newItems[index] = currentItem;
+      commit('SET_PAGE_ITEMS', newItems); 
+    },
+    async addRecordMappingOption({ state, commit, getters }, data) {
+      const { pageItems, currentItemId } = state;
+      const { currentItem } = getters;
+      const { mappingQuestionId, mappingOptionId } = data;
+      const option = await records.mappingOptions.save(currentItemId, { mappingQuestionId, mappingOptionId });
+
+      const index = pageItems.findIndex((item) => item.id === currentItem.id);
+      let newItems = [...pageItems];
+      currentItem.MappingOptions = [...currentItem.MappingOptions, option.data];
+      newItems[index] = currentItem;
+      commit('SET_PAGE_ITEMS', newItems);
+    },
+    async removeRecordMappingOption({ state, commit, getters }, optionId) {
+      const { pageItems, currentItemId } = state;
+      const { currentItem } = getters;
+      await records.mappingOptions.delete(currentItemId, optionId);
+      const index = pageItems.findIndex((item) => item.id === currentItem.id);
+      let newItems = [...pageItems];
+      currentItem.MappingOptions = currentItem.MappingOptions.filter(o => o.id !== optionId);
+      newItems[index] = currentItem;
+      await commit('SET_PAGE_ITEMS', newItems);
+    },
+    setMoveLock({ commit }) {
+      commit('SET_MOVE_LOCK', true);
+    },
+    unsetMoveLock({ commit }) {
+      commit('SET_MOVE_LOCK', false);
     }
   },
   modules: {

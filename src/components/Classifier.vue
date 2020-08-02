@@ -7,10 +7,10 @@
     </h4>
 
     <h1>{{ currentItem.title }}</h1>
-    <p>
+    <p class="author">
       <small>{{ currentItem.author }}</small>
     </p>
-    <p>
+    <p class="publication">
       <a :href="currentItem.url">In publisher database</a> |&nbsp;
       <span
         v-if="currentItem.Publication"
@@ -24,7 +24,7 @@
       {{ currentItem.description }}
     </p>
 
-    <AbstractWrapper class="abstract-wrapper" :settings="{}">
+    <div class="abstract-wrapper" :settings="{}" :style="{ paddingBottom: abstractPaddingBottom }">
       <p v-if="currentItem.abstract" class="abstract">
         <small>
           <b>Abstract:</b>
@@ -32,53 +32,76 @@
         <br />
         <span v-html="nltobr(sanitizeAbstract(currentItem.abstract))"></span>
       </p>
-    </AbstractWrapper>
-
-    <input
-      :value="currentItem.comment"
-      @input="setComment"
-      @focus="commentFocus = true"
-      @blur="commentFocus = false"
-      class="comment"
-      type="text"
-      placeholder="Write your comments here..."
-    />
-
-    <div class="actions">
-      <button
-        @click="setExcluded"
-        :class="[currentItem.status === 'excluded' && 'action--selected']"
-        class="action action--exclude"
-      >Exclude</button>
-      <button
-        @click="setUncertain"
-        :class="[currentItem.status === 'uncertain' && 'action--selected']"
-        class="action action--uncertain"
-      >Uncertain</button>
-      <button
-        @click="setIncluded"
-        :class="[currentItem.status === 'included' && 'action--selected']"
-        class="action action--include"
-      >Include</button>
     </div>
+
+    <section class="bottom-bar">
+      <div class="bottom-bar__center">
+        <div class="bottom-bar__actions">
+          <input
+            :value="currentItem.comment"
+            @input="setComment"
+            @focus="setMoveLock"
+            @blur="unsetMoveLock"
+            class="comment"
+            type="text"
+            placeholder="Write your comments here..."
+          />
+
+          <div class="inclusion-actions" v-if="tab === 'inc-exc'">
+            <button
+              @click="setExcluded"
+              :class="[currentItem.status === 'excluded' && 'action--selected']"
+              class="action action--exclude"
+            >Exclude</button>
+            <button
+              @click="setUncertain"
+              :class="[currentItem.status === 'uncertain' && 'action--selected']"
+              class="action action--uncertain"
+            >Uncertain</button>
+            <button
+              @click="setIncluded"
+              :class="[currentItem.status === 'included' && 'action--selected']"
+              class="action action--include"
+            >Include</button>
+          </div>
+
+          <mapping-actions v-if="tab === 'map'"></mapping-actions>
+        </div>
+      </div>
+    </section>
   </section>
 </template>
 <script>
 import { mapGetters, mapState, mapActions } from "vuex";
+import MappingActions from "./MappingActions.vue";
 import { format as formatDate } from "date-fns";
-import AbstractWrapper from "vue-perfect-scrollbar";
 import { debounce } from "lodash";
 import { keyCodes } from "../helpers/utils";
 
 export default {
   name: "Classifier",
-  components: { AbstractWrapper },
+  components: {
+    MappingActions,
+  },
   data() {
-    return { commentFocus: false };
+    return {
+      commentFocus: false,
+    };
   },
   computed: {
     ...mapGetters(["currentItem"]),
-    ...mapState(["pageItems", "pageLength", "page", "statusFilter"]),
+    ...mapState([
+      "pageItems",
+      "pageLength",
+      "page",
+      "statusFilter",
+      "tab",
+      "moveLock",
+      "mappingQuestions",
+    ]),
+    abstractPaddingBottom() {
+      return this.tab === "map" ? `${this.mappingQuestions.length * 35}px` : 0;
+    },
     createdFormatted() {
       if (!this.currentItem) {
         return null;
@@ -106,7 +129,7 @@ export default {
         (status === null && this.statusFilter === "null") ||
         status === this.statusFilter
       );
-    }
+    },
   },
   created() {
     window.addEventListener("keydown", this.moveTo);
@@ -119,7 +142,9 @@ export default {
       "setItemStatus",
       "setItemComment",
       "setCurrentItem",
-      "setPage"
+      "setPage",
+      "setMoveLock",
+      "unsetMoveLock",
     ]),
     async setExcluded() {
       await this.setItemStatus("excluded");
@@ -133,7 +158,7 @@ export default {
       await this.setItemStatus("included");
       this.setNextItem(this.nextFlag);
     },
-    setComment: debounce(async function(e) {
+    setComment: debounce(async function (e) {
       await this.setItemComment(e.target.value);
     }, 1000),
     setNextItem(skip) {
@@ -141,7 +166,7 @@ export default {
         return;
       }
       const index = this.pageItems.findIndex(
-        item => item.id === this.currentItem.id
+        (item) => item.id === this.currentItem.id
       );
       if (index >= this.pageLength - 1) {
         this.setPage(this.page + 1);
@@ -151,7 +176,7 @@ export default {
     },
     async setPrevItem() {
       const index = this.pageItems.findIndex(
-        item => item.id === this.currentItem.id
+        (item) => item.id === this.currentItem.id
       );
       if (index <= 0 && this.page > 1) {
         await this.setPage(this.page - 1);
@@ -168,7 +193,7 @@ export default {
       return res.split("\n•\n").join("");
     },
     moveTo(e) {
-      if (!this.commentFocus) {
+      if (!this.moveLock) {
         switch (e.keyCode) {
           case keyCodes.ARROW_LEFT:
             this.setPrevItem();
@@ -179,8 +204,8 @@ export default {
           default:
         }
       }
-    }
-  }
+    },
+  },
 };
 </script>
 <style scoped lang="scss">
@@ -190,11 +215,14 @@ export default {
   overflow: auto;
   display: flex;
   flex-direction: column;
-  height: 875px;
+}
+
+h1 {
+  margin: 20px 0 10px;
 }
 
 .abstract {
-  line-height: 36px;
+  line-height: 32px;
   font-family: Georgia;
   font-size: 18px;
   margin: 0;
@@ -202,13 +230,10 @@ export default {
 
 .abstract-wrapper {
   flex: 1;
-  overflow: hidden;
   position: relative;
-  padding: 10px 20px;
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.15);
 }
 
-.actions {
+.inclusion-actions {
   margin-top: 5px;
   display: flex;
   padding: 5px;
@@ -304,6 +329,50 @@ export default {
     outline: none;
     box-shadow: none;
     background-color: #eaeaea;
+  }
+}
+
+.publication {
+  margin-top: 0;
+  padding-bottom: 10px;
+  border-bottom: 3px solid #eaeaea;
+}
+
+.author {
+  margin-top: 0;
+}
+
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+
+  &__center {
+    max-width: 1200px;
+    margin: 0 auto;
+    pointer-events: none;
+  }
+
+  &__actions {
+    display: flex;
+    flex-direction: column;
+    margin-left: 230px;
+    background: #fff;
+    padding-bottom: 5px;
+    position: relative;
+    border-top: 3px solid #eaeaea;
+    pointer-events: auto;
+
+    &:after {
+      content: "";
+      width: 100%;
+      height: 1px;
+      background: #fff;
+      position: absolute;
+      top: -4px;
+    }
   }
 }
 

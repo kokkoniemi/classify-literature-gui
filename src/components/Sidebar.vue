@@ -119,6 +119,9 @@ export default {
   border: 1px solid #eaeaea;
   padding: 5px;
   margin-right: 10px;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 h4 {
