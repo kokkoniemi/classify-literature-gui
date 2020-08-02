@@ -83,7 +83,7 @@ export default new Vuex.Store({
         await dispatch('setCurrentItem', items.data.records[0]);
       }
     },
-    async setItemStatus({ commit, state, getters }, payload) {
+    async setItemStatus({ commit, state, dispatch, getters }, payload) {
       const { pageItems, statusFilter, nick } = state;
       const { currentItem } = getters;
       if (currentItem) {
@@ -92,14 +92,14 @@ export default new Vuex.Store({
         let newItems = [...pageItems];
         let nextItem = null;
         if (statusFilter !== "" && statusFilter !== item.data.status) {
-          newItems = newItems.filter(oldItem => oldItem.id !== item.data.id);
-          nextItem = pageItems.length > index + 1 ? pageItems[index + 1] : pageItems[pageItems.length - 1];
+          await dispatch('fetchPageItems', { status: statusFilter });
+          nextItem = pageItems.length <= index + 1 ? state.pageItems[pageItems.length - 1] : pageItems[index + 1];
         } else {
           nextItem = item.data;
           newItems[index] = item.data;
+          commit('SET_PAGE_ITEMS', newItems);
         }
         commit('SET_CURRENT_ITEM', nextItem);
-        commit('SET_PAGE_ITEMS', newItems);
       }
     },
     async setItemComment({ commit, state, getters }, payload) {

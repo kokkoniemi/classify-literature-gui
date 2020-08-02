@@ -24,7 +24,7 @@
       {{ currentItem.description }}
     </p>
 
-    <div class="abstract-wrapper" :settings="{}">
+    <div class="abstract-wrapper" :settings="{}" :style="{ paddingBottom: abstractPaddingBottom }">
       <p v-if="currentItem.abstract" class="abstract">
         <small>
           <b>Abstract:</b>
@@ -81,7 +81,7 @@ import { keyCodes } from "../helpers/utils";
 export default {
   name: "Classifier",
   components: {
-    MappingActions
+    MappingActions,
   },
   data() {
     return {
@@ -90,7 +90,18 @@ export default {
   },
   computed: {
     ...mapGetters(["currentItem"]),
-    ...mapState(["pageItems", "pageLength", "page", "statusFilter", "tab", "moveLock"]),
+    ...mapState([
+      "pageItems",
+      "pageLength",
+      "page",
+      "statusFilter",
+      "tab",
+      "moveLock",
+      "mappingQuestions",
+    ]),
+    abstractPaddingBottom() {
+      return this.tab === "map" ? `${this.mappingQuestions.length * 35}px` : 0;
+    },
     createdFormatted() {
       if (!this.currentItem) {
         return null;
@@ -133,7 +144,7 @@ export default {
       "setCurrentItem",
       "setPage",
       "setMoveLock",
-      "unsetMoveLock"
+      "unsetMoveLock",
     ]),
     async setExcluded() {
       await this.setItemStatus("excluded");
