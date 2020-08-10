@@ -12,13 +12,23 @@
           class="app-tab"
           @click="() => updateTab('map')"
         >Map literature</li>
+        <li
+          :class="{'app-tab--active': tab === 'data-grid'}"
+          class="app-tab"
+          @click="() => updateTab('data-grid')"
+        >Data</li>
       </ul>
       <input type="text" :class="[!this.nick && 'empty']" placeholder="Nickname" v-model="nickname" />
     </div>
-    <div class="main-container" v-if="this.nick">
-      <sidebar></sidebar>
-      <classifier></classifier>
-    </div>
+
+    <template v-if="this.nick">
+      <div class="main-container" v-if="tab !== 'data-grid'">
+        <sidebar></sidebar>
+        <classifier></classifier>
+      </div>
+      
+      <data-tab v-else></data-tab>
+    </template>
     <div v-else class="message">Start by typing your nickname or initials in the blinking box above</div>
   </div>
 </template>
@@ -27,12 +37,14 @@
 import { mapActions, mapState } from "vuex";
 import Sidebar from "./components/Sidebar.vue";
 import Classifier from "./components/Classifier.vue";
+import DataTab from "./components/DataTab.vue";
 
 export default {
   name: "App",
   components: {
     Sidebar,
     Classifier,
+    DataTab,
   },
   computed: {
     ...mapState(["nick", "tab"]),
